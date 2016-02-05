@@ -1,0 +1,54 @@
+Hints and notes concerning NEMS/NMMB regional modeling system:
+
+1. There are several instances where an existing file will NOT be overwritten
+   if it exists from a previous run.  The code will CRASH if this
+   file already exists - these are sometimes output files, sometimes log files.
+   Here are some known cases of this:
+
+   geogrid.exe: ncep_processing=.true. option
+         nest_start*
+
+   nemsinterp.exe:
+         boco*
+         input*
+         configure_nest_details*
+         domain_details*
+
+   NEMS.x:
+         fcst_done*
+
+2. The number of processors specified in the NEMS configure file
+   MUST MATCH exactly the number of processors requested in the
+   job submit script.  For nests, this is complicated (see nests
+   talk by Tom Black).  One-way nests, this is just additive, for
+   2-way nesting, processors can be shared between nests.
+
+   inpes*jnpes + read_groups*read_tasks_per_group + write_groups*write_tasks_per_group
+   ---- for each domain 
+
+3. solver_state.txt
+   - is a NEMS.x run-time file that defines state variables and history/restart entries.
+     It must match the expected state variables in the source code (but you can 
+     update history/restart as desired).
+
+4. nests.txt
+   - is a NEMS.x run-time file that defines state variables and history/restart entries.
+     It must match the expected state variables in the source code (but you can 
+     update history/restart as desired).
+
+5. configure_file_XX
+   - is a namelist-like configuration file.  The domain 01 file should match (link!) the
+     file called "model_configure".  
+   - warnings about missing variables here are not (usually) fatal, but annoying.
+   - missing variables can be found/added from the sample file at:
+     <nems-src-dir>/tests/nems.configure.IN 
+
+6. NPS/geogrid:
+   - two options for geogrid processing:
+     - ncep_processing=.false. --- this is similar to WRF/geogrid
+     - ncep_processing=.true.  --- this essentially "calls" gridgen_sfc - a different set of processing
+   - for GWD options in NEMS, ncep_processing=.true.
+   - for moving nests in NEMS, ncep_processing=.true.
+   - ncep_processing=.true. uses an ADDITIONAl namelist input file, referenced as fort.81
+     (link testb.nml to fort.81).  This namelist file has directory paths for the geog datafiles,
+     which may need to be updated.

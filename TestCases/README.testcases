@@ -1,0 +1,138 @@
+BASIC STEPS:
+
+1. set up namelist/config files for NPS and NMMB
+   NPS:  namelist.nps
+   NMB: configure_file_01 (and _02, etc for nested domains)
+   Note - There is also a script that will create a namelist.nps from templates: build_namelists.scr
+2. Link in the GRIB files (GFS, NAM, etc)
+3. Run ungrib, geogrid, metgrid
+4. Run nemsinterp.exe --- this is the same functionality as real_nmm.exe in WRF - but is part of the init/pre-processing software package (rather than the model)
+5. Run the forecast model (NEMS.x)
+6. Run UPP or GrADS to visualize the model output
+
+TEST CASES:
+
+test.1dom/npsprd - has an example test case for a single domain NPS run
+test.1dom/nmbprd - has an example test case for a single domain NEMS/NMMB run
+test.1dom/postprd - has an example grads script to plot T10
+
+test.2dom/npsprd - has an example test case for a nested 2-domain NPS run
+test.2dom/nmbprd - has an example test case for a nested 2-domain NEMS/NMMB run
+
+test.ThompsonMP/npsprd - has an example test case for a 3-domain case, using GWD and ncep_processing
+test.ThompsonMP/nmbprd - has an example test case for a 3-domain case, using Thompson microphysics and RRTM radiation
+
+
+Pick one of these cases (from simple to complex) - the instructions are the
+same for each. 
+
+
+
+RUN NPS:
+
+setenv NPS_DIR <your-top-dir>/NMMB_init/NPS
+
+cd test.1dom/npsprd
+
+confirm namelist.nps has:
+
+   geog_data_path = '<your-top-dir>/geog'
+   ncep_proc_path = '<your-top-dir>/geog'
+
+===============
+NOTE: Additional for Thompson case:
+      this test uses "ncep_processing=.true.", so add this link prior to geogrid.exe
+      ln -s testb.nml fort.81
+      AND change the data paths in testb.nml to match your geog directory!
+===============
+
+ln -sf $NPS_DIR/geogrid/GEOGRID.TBL.NMB GEOGRID.TBL
+ln -sf $NPS_DIR/geogrid.exe .
+
+ln -sf $NPS_DIR/ungrib/Variable_Tables/Vtable.GFS_with_isobaric.pre20150114 Vtable 
+--OR--
+ln -sf $NPS_DIR/ungrib/Variable_Tables/Vtable.GFS_with_isobaric.post20150114 Vtable 
+
+ln -sf $NPS_DIR/ungrib.exe .
+ln -sf $NPS_DIR/metgrid/METGRID.TBL.NMB METGRID.TBL
+ln -sf $NPS_DIR/metgrid.exe .
+ln -sf $NPS_DIR/nemsinterp.exe .
+
+
+$NPS_DIR/link_grib.csh <your-top-dir>/TestCases/GFS/20131104/gfs*
+--OR--
+$NPS_DIR/link_grib.csh <your-top-dir>/TestCases/GFS/2016020200/gfs*
+
+RUN the executables using a simple bsub script (edit for your project # if necessary)
+
+===============
+NOTE: a sample "qsub" script is also provides for jet/theia
+===============
+
+bsub < run_geogrid.csh
+bsub < run_ungrib.csh
+ ---> wait until finished, then
+bsub < run_metgrid.csh
+ ---> wait until finished, then
+bsub < run_nemsinterp.csh
+
+RESULTS:
+
+Initial Conditions: input_domain_01*  (and 02, etc for nests)
+Boudary Conditions:   boco.NNNN
+configure_nest_details_01 (and 02, etc)
+domain_details_01 (and 02, etc)
+
+
+RUN NEMS/NMMB:
+
+cd ../nmbprd
+
+ln -s configure_file_d01 model_configure #NOTE: already done in the examples
+ln -sf <your-top-dir>/NEMS/exe/NEMS.x .
+ln -sf <your-top-dir>/TABLES/* .
+ln -sf ../npsprd/input_domain_0* .
+ln -sf ../npsprd/boco.00* .
+
+===============
+NOTE: Additional for Thompson case:
+   ln -s global_o3prdlos.f77 fort.28
+   ln -s global_o3clim.txt fort.48
+   ln -sf ../npsprd/GWD* .
+# Since this test case uses the IGBP land use data, different tables are needed!
+#  Remove the links for VEG/LAND tables:
+   rm VEGPARM.TBL
+   rm LANDUSE.TBL
+   cp IGBP_VEGPARM.TBL VEGPARM.TBL
+   cp IGBP_LANDUSE.TBL LANDUSE.TBL
+===============
+
+
+bsub < run_nmb.csh
+
+RESULTS:
+
+nmmb_hst* 
+
+The output files are named with forecast offset/tau (NOT
+   with the valid time of the forecast!)
+
+BASIC graphics using GrADS:
+
+the native output format from NEMS is "nemsio", which is binary. 
+Option 1 is to run UPP to get a GRIB file and then use your favorite
+  grib viewer (NCL)
+Option 2 is to use GrADS to read/plot the native files - a GrADS
+  control file is generated with each NMMB output file
+
+cd postprd
+ln -s ../nmbprd/nmmb_hst* .
+module load grads
+grads -l -b -c 'run nmmbvis'
+
+gxps -c -i nmmbvis.gmf -o t10.ps
+convert -rotate 90 t10.ps t10.png
+display t10.png
+
+EDIT nmmbvis.gs -- to select other variables, maps, etc.
+

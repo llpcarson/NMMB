@@ -1,0 +1,66 @@
+&share
+ wrf_core = 'NMB',
+ max_dom = 3,
+ start_date = '2013-11-04_00:00:00', '2013-11-04_00:00:00', '2013-11-04_00:00:00'
+ end_date = '2013-11-05_00:00:00', '2013-11-05_00:00:00', '2013-11-05_00:00:00'
+ interval_seconds = 10800
+ io_form_geogrid = 2,
+ debug_level = 50 
+/
+
+&geogrid
+ parent_id =           0, 1, 1
+ parent_grid_ratio =   1, 4, 4
+ e_we           = 875, 1828, 1195
+ e_sn           = 815, 1466, 1239
+ geog_data_res  = '2m', '2m', '2m'
+ dx = 0.126,
+ dy = 0.108,
+ map_proj = 'rotated_llb'
+ ref_lat   = 54.0
+ ref_lon   = -106.0
+ dom_cen_lat = 54.0, 38.59, 59.79
+ dom_cen_lon = -106.0, -98.91, -157.30
+ truelat1  =  54.0,
+ truelat2  =  54.0,
+ stand_lon =  -106.0,
+ geog_data_path = '/glade/p/ral/jnt/DATA_nems_init/geog'
+ ncep_processing = .true. 
+ ncep_proc_path = '/glade/p/ral/jnt/DATA_nems_init/geog'
+ ncep_proc_prefix = 'b'
+ ncep_proc_domain_type = 'bgrid'
+ do_gwd = .true.
+ just_last = .false.
+ use_igbp = .true.
+ ncep_proc_grib2 = .true.
+ opt_geogrid_tbl_path = '.'
+ movable_nests = .false.
+/
+
+&ungrib
+ out_format = 'WPS'
+ prefix = 'GFS'
+ spectral = .false.
+/
+
+&metgrid
+ constants_name = '',
+ fg_name = 'GFS',
+ io_form_metgrid = 2,
+ opt_metgrid_tbl_path = '.' 
+/
+
+&nemsinterp
+ pt = 1000.
+ ptsgm = 30000.
+ nz = 60
+ direct_temp = .true.
+ global = .false.
+ do_clouds = .true.
+ grib_src = 'GFS',
+ boundary_flux = .true.
+ lnsh = 5
+ lnsv = 5
+ vcoord = 1
+ coord_levs = .000000,.024791,.049583,.074375,.099167,.123759,.148051,.170544,.189838,.208032,.226026,.245220,.266013,.288006,.311498,.335390,.359683,.384175,.408767,.433259,.457551,.481743,.505835,.529827,.553719,.577312,.600604,.623497,.645690,.667282,.688176,.708369,.728063,.747157,.765751,.783645,.801039,.817734,.833928,.849123,.863319,.876814,.888811,.899507,.908404,.916402,.923599,.930397,.936895,.943093,.948991,.954689,.960187,.965486,.970684,.975782,.980781,.985679,.990479,.995253,1.000000
+/
